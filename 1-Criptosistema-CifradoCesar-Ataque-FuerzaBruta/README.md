@@ -25,6 +25,8 @@
     `esto es un mensaje de pruebas`
 - La clave de descifrado es: `7`
 
+*Práctica de una capacitación de Ciberseguridad Defensiva*
+
 
 
 
