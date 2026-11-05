@@ -81,7 +81,7 @@ Utilizando los siguientes comandos:
 
     ls -lh /swapfile
 
-Podemos observar que el swapfile se encuentra en la raiz del sistema y su tamaño o capacidad disponible es de 948 MB.
+Podemos observar que el archivo swapfile se encuentra en el directorio raíz del sistema (/) y tiene un tamaño máximo aproximado de 948 MB.
 
 | <img src="screenshots/1-ubicacion-swapfile.png" height="480"> |
 |:------------------------------------------------------:|
@@ -100,20 +100,24 @@ Utilizando el siguiente comando:
 
     emacs /etc/passwd
 
-Este archivo contiene informacion de todos los usuarios que se encuentran alojados en nuestra maquina linux. Con lo cual al abrirlo con Emacs, el programa usará la memoria RAM para trabajar con su contenido.
-El proceso Emacs tiene una cantidad de ram asociada que puede consumir pero por el momento no llegó al limite y por lo tanto  podemos observar que carga este archivo
-sin ningún problema.
+Este archivo contiene información de las cuentas de usuario del sistema, como sus nombres, identificadores y directorios personales. Al abrirlo con Emacs, el programa carga su contenido en memoria ram para poder trabajar con él.
+
+El proceso Emacs tiene una cantidad de ram asociada que puede consumir pero por el momento no llegó al limite y por lo tanto  podemos observar que carga este archivo sin ningún problema.
 
 | <img src="screenshots/2-archivo-passwd-emacs.png" height="450"> |
 |:------------------------------------------------------:|
 | *Captura 2 — Archivo /etc/passwd abierto en Emacs*          |
 
+***Aclaracion**: Para poder usar el editor Emacs se necesita instalarlo ejecutando el siguiente comando porque por defecto no viene instalado en el S.O:*
+
+    sudo apt install emacs
+
+
 ### 3. Identificación del proceso Emacs.
-En este paso, temporalmente suspenderemos el proceso mediante Ctrl + Z, o sea lo enviamos a segundo plano y buscaremos el PID de Emacs en la lista de procesos en la terminal. Usando el siguiente comando:
+En este paso, suspendemos temporalmente Emacs mediante el atajo Ctrl + Z. Luego buscamos su identificador de proceso (PID) para poder aplicar una restricción de recursos. Usando el siguiente comando:
 
     ps
 
-Necesitamos la informacion del PID de Emacs, el identificador del proceso, para aplicar a Emacs un limite de recurso y así preparar nuestro escenario de prueba.
 
 | <img src="screenshots/3-PID-emacs.png" height="300"> |
 |:------------------------------------------------------:|
@@ -127,8 +131,7 @@ Ahora copiamos el PID de Emacs y lo utilizaremos en el siguiente comando:
 
 En este comando, [PID] debe ser reemplazado por el identificador real del proceso Emacs.
 
-La opción --as establece un límite para el espacio de direcciones virtuales del proceso. 
-El objetivo del procedimiento es limitar los recursos disponibles para Emacs y provocar una situación en la que el programa no pueda continuar trabajando normalmente.
+La opción --as establece un límite al espacio de direcciones virtuales del proceso. En este caso, configuramos un límite de 1000 bytes para provocar una restricción que impida a Emacs continuar funcionando normalmente.
 
 | <img src="screenshots/4-limitar-direcciones-virtuales-emacs.png" height="90"> |
 |:------------------------------------------------------:|
@@ -137,7 +140,6 @@ El objetivo del procedimiento es limitar los recursos disponibles para Emacs y p
 
 
 ### 5. Reanudación del proceso y observación de su comportamiento.
-
 Luego ejecutaremos el siguiente comando:
 
     fg
@@ -156,7 +158,6 @@ El objetivo de este paso, es observar el comportamiento del proceso ante la rest
 
 
 ### 6. Copia del archivo de intercambio.
-
 Después del experimento, vamos a obtener una copia del archivo swapfile para analizarla fuera del sistema en ejecución.
 Utilizando el siguiente comando:
 
@@ -170,8 +171,7 @@ En este comando, el [usuario] debe ser reemplazado por el nombre real del usuari
 - Conservar el archivo original sin modificaciones.
 - Documentar el origen de la evidencia y trabajar sobre una copia.
 
-
-Luego ejecutaremos el siguiente comando con el fin de modificar ciertos permisos para copiar este archivo fuera de nuestra maquina virtual 
+Finalmente, modificamos los permisos de la copia para facilitar su acceso durante la transferencia al sistema anfitrión.
 
     sudo chmod 755 /home/[usuario]/Desktop/swapfile
 
@@ -182,9 +182,8 @@ Luego ejecutaremos el siguiente comando con el fin de modificar ciertos permisos
 
 
 ### 7. Transferencia de la evidencia al sistema anfitrión o host.
-En este paso, transferimos la copia del archivo de intercambio, swapfile, desde Ubuntu, al sistema operativo anfitrión y vamos a crear una carpeta llamada **ubuntu_swap** para almacenar la evidencia en nuestro host principal.
+En este paso, transferimos la copia del archivo de intercambio, swapfile, desde Ubuntu hacia el sistema operativo anfitrión y vamos a crear una carpeta llamada **ubuntu_swap** para almacenar la evidencia y utilizarla posteriormente en Autopsy.
 
-Y así disponer de una copia de la evidencia para su posterior análisis con Autopsy.
 
 | <img src="screenshots/7-evidencia-en-sistema-anfitrion.png" height="200"> |
 |:------------------------------------------------------:|
@@ -192,13 +191,13 @@ Y así disponer de una copia de la evidencia para su posterior análisis con Aut
 
 
 ### 8. Verificación de los datos de referencia.
-Antes de buscar información en la evidencia, podemos consultar nuevamente el archivo /etc/passwd en Ubuntu.
-Utilizando el comando
+Antes de buscar información en la evidencia, podemos consultar nuevamente el archivo  `/etc/passwd` en Ubuntu.
+Utilizando el comando:
 
-emacs /etc/passwd
+    emacs /etc/passwd
 
-En este archivo identificaremos algunos nombres de usuario que después podemos utilizarlo como palabras clave durante el análisis.
-Para buscar más rápido nuestras palabras claves podemos usar el shorcut  `ctrl + s`, en mi caso el nombre de usuario `jesi-ubuntu`
+En este archivo identificaremos algunos nombres de usuario que después lo utilizaremos como palabras clave durante el análisis.
+Para encontrarlos más rapidamente, podemos usar el shorcut  `ctrl + S`, en mi caso buscaré el nombre de usuario `jesi-ubuntu`
 
 En este paso nuestro objetivo sera conocer los datos de referencia que se intentarán localizar en el archivo de intercambio.
 
@@ -206,8 +205,77 @@ En este paso nuestro objetivo sera conocer los datos de referencia que se intent
 |:------------------------------------------------------:|
 | *Captura 8 — Contenido de /etc/passwd*       |
 
+### 9. Creación del caso en Autopsy
+En este penúltimo paso tenemos que tener previamente instalado Autopsy.
+Luego abriremos Autopsy y crearemos un caso nuevo con el nombre **ubuntu_swapfile** y le indicamos en dónde se guardará el caso nuevo de Autopsy.
+
+Posteriormente, agregamos el archivo de intercambio como fuente de datos como tipo de **imagen de archivo sin espacio a alojar**.
+
+| <img src="screenshots/9-1-creacion-nuevo-caso.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 9.1 — Selección de crear un caso nuevo*       |
+
+| <img src="screenshots/9-2-Nombre-caso-nuevo.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 9.2 — Indicamos el nombre del caso y ruta en donde se guardará*       |
+
+| <img src="screenshots/9-3-seleccion-tipo-dato-fuente.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 9.3 — Seleccionamos el tipo de fuente de datos*|
+
+| <img src="screenshots/9-4-ruta-de-copia-swapfile.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 9.4 — Indicamos la ruta en donde se encuentra nuestro swapfile*|
+
+
+### 10. Busqueda en Autopsy
+
+Una vez procesada la evidencia, utilizamos la funcionalidad Keyword Search de Autopsy para buscar cadenas de texto.
+
+En este caso, utilizamos las palabras clave `root` y `jesi-ubuntu` para comprobar si el archivo de intercambio conservaba fragmentos de información similares al contenido de `/etc/passwd `.
+
+También observamos que Autopsy permite identificar posibles direcciones de correo electrónico mediante patrones de búsqueda basados en una expresión regular.
+
+| <img src="screenshots/10-busqueda-emails.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 10.1 — Búsqueda de emails*|
+
+| <img src="screenshots/10-2-keyword-search.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 10.2 — Encuentro de fragmentos del archivo /etc/passwd y busqueda de palabras claves* |
+
+
+| <img src="screenshots/10-3-keyword-jesi.png" height="400"> |
+|:------------------------------------------------------:|
+| *Captura 10.3 — Búsqueda del usuario jesi-ubuntu* |
+
 
 ## Lista de comandos utilizados: 
+| Comando | Explicación | Uso en la práctica |
+|---|---|---|
+| **`sudo apt install tree`** | Instala la herramienta `tree`. | Visualizar la estructura de directorios en forma de árbol. |
+| **`tree / -L 1`** | Muestra los directorios y archivos del primer nivel de la raíz `/`. | Identificar la ubicación del archivo `swapfile`. |
+| **`ls -lh /swapfile`** | Muestra información del archivo y su tamaño en formato legible. | Verificar el tamaño del archivo de intercambio. |
+| **`sudo apt install emacs`** | Instala el editor de texto `emacs`. | Leer, editar archivos. |
+| **`emacs /etc/passwd`** | Abre el archivo `/etc/passwd` con el editor Emacs. | Consultar las cuentas de usuario del sistema. |
+| **`ps`** | Muestra los procesos con su respectivo PID. | Identificar el PID del proceso Emacs. |
+| **`prlimit --as=1000 --pid [PID]`** | Establece un límite al espacio de direcciones virtuales de un proceso. | Limitar la memoria virtual de Emacs para realizar la prueba. |
+| **`fg`** | Reanuda en primer plano un proceso suspendido. | Volver a ejecutar Emacs después de aplicar el límite. |
+| **`sudo cp /swapfile /home/[usuario]/Desktop/`** | Copia el archivo `swapfile` al Escritorio. | Obtener una copia para analizarla fuera de la máquina virtual. |
+| **`sudo chmod 755 /home/[usuario]/Desktop/swapfile`** | Modifica los permisos de la copia del archivo swapfile. | Otorgar permisos de lectura, escritura y ejecución al propietario, y lectura y ejecución al grupo y otros usuarios. |
+
+## Atajos de teclado utilizados
+
+| Atajo | Explicación | Uso en la práctica |
+|---|---|---|
+| **`Ctrl + Z`** | Suspende temporalmente el proceso y lo pasa a 2do plano. | Suspender Emacs para obtener su PID. |
+| **`Ctrl + S`** | Inicia una búsqueda de texto en Emacs. | Buscar nombres de usuario dentro de `/etc/passwd`. |
 
 
 ## Conclusiones:
+
+En esta práctica pude encontrar fragmentos de información similares al archivo `/etc/passwd`, que me permitieron identificar cuentas del sistema como `root`, `daemon`, `bin`, `jesi-ubuntu` y entre otras, junto con sus UID, GID, directorios personales y shells. Esto demuestra que el `swapfile` puede conservar información que estuvo en la memoria RAM, aunque no se recuperó una copia completa del archivo original.
+
+También se identificó que `root` tiene UID 0, lo que permite investigar si existen otras cuentas con privilegios administrativos. Sin embargo, no se encontró otra cuenta con ese UID. Además, se detectaron algunas direcciones de correo electrónico que se podría investigar para conocer su origen.
+
+**Los resultados fueron parciales**, porque el análisis se limitó al archivo `swapfile` y a los fragmentos de información que Autopsy pudo identificar.
